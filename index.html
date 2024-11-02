@@ -8,6 +8,7 @@
     <script src="https://unpkg.com/web3@latest/dist/web3.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <link rel="stylesheet" href="styles.css"> <!-- Link to external CSS -->
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Roboto:wght@400&display=swap" rel="stylesheet"> <!-- Google Fonts -->
 </head>
 <body>
     <div class="container">
@@ -38,7 +39,7 @@
                 <h2>Generated Certificate</h2>
             </div>
             <div class="card-body text-center">
-                <canvas id="certificateCanvas" width="600" height="400"></canvas>
+                <canvas id="certificateCanvas" width="800" height="500"></canvas>
                 <br>
                 <button id="downloadButton" class="btn btn-success mt-2">Download Certificate</button>
             </div>
@@ -107,9 +108,10 @@
             try {
                 const accounts = await web3.eth.getAccounts();
                 const result = await contract.methods.issueCertificate(name, course, dateIssued).send({ from: accounts[0] });
-                alert(`Certificate issued successfully! Transaction Hash: ${result.transactionHash}`);
-                // Create certificate image after issuance
-                createCertificateCanvas(name, course, dateIssued);
+                const transactionHash = result.transactionHash; // Capture the transaction hash
+                alert(`Certificate issued successfully! Transaction Hash: ${transactionHash}`);
+                // Create certificate image after issuance, passing the transaction hash
+                createCertificateCanvas(name, course, dateIssued, transactionHash);
             } catch (error) {
                 console.error("Error issuing certificate:", error);
                 alert('Failed to issue certificate. Check console for details.');
@@ -143,37 +145,58 @@
         }
 
         // Function to create certificate canvas
-        function createCertificateCanvas(name, course, dateIssued) {
+        function createCertificateCanvas(name, course, dateIssued, transactionHash) {
             const canvas = document.getElementById('certificateCanvas');
             const ctx = canvas.getContext('2d');
 
             // Clear the canvas before drawing
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Draw background (optional)
-            ctx.fillStyle = "#f1f1f1";
+            // Create a gradient background
+            const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            gradient.addColorStop(0, '#f8d3b6'); // Light peach
+            gradient.addColorStop(1, '#f8c9e5'); // Light pink
+            ctx.fillStyle = gradient;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+            // Draw a border around the certificate
+            ctx.strokeStyle = '#d3d3d3'; // Light gray border
+            ctx.lineWidth = 10;
+            ctx.strokeRect(5, 5, canvas.width - 10, canvas.height - 10);
+
             // Add title
-            ctx.fillStyle = "#000";
-            ctx.font = "24px Arial";
-            ctx.fillText("Certificate of Completion", 150, 100);
+            ctx.fillStyle = "#333"; // Dark text for better contrast
+            ctx.font = "bold 36px 'Playfair Display', serif"; // Elegant font for title
+            ctx.textAlign = "center"; // Center text
+            ctx.fillText("Certificate of Completion", canvas.width / 2, 100);
 
             // Add certificate details
-            ctx.font = "20px Crimson";
-            ctx.fillText(`This certifies that`, 180, 150);
-            ctx.fillText(`${name}`, 220, 200); // Name of the student
-            ctx.fillText(`has successfully completed the course`, 130, 250);
-            ctx.fillText(`${course}`, 230, 300); // Course name
-            ctx.fillText(`Issued on: ${dateIssued}`, 190, 350); // Date issued
+            ctx.fillStyle = "#444"; // Darker text for details
+            ctx.font = "22px 'Roboto', sans-serif"; // Stylish font for details
+            ctx.textAlign = "center"; // Center text for details
+            ctx.fillText("This certifies that", canvas.width / 2, 160);
+            ctx.fillText(name, canvas.width / 2, 220); // Name of the student
+            ctx.fillText("has successfully completed the course", canvas.width / 2, 280);
+            ctx.fillText(course, canvas.width / 2, 340); // Course name
+            ctx.fillText(`Issued on: ${dateIssued}`, canvas.width / 2, 400); // Date issued
+
+            // Add transaction hash at the bottom
+            ctx.fillStyle = "#555"; // Color for transaction hash
+            ctx.font = "16px 'Roboto', sans-serif"; // Font for transaction hash
+            ctx.fillText(`Transaction Hash: ${transactionHash}`, canvas.width / 2, 440); // Display transaction hash
+
+            // Add a decorative flourish at the bottom
+            ctx.fillStyle = "#aaa"; // A subtle color for decoration
+            ctx.font = "14px 'Roboto', sans-serif"; // Slightly smaller font for the flourish
+            ctx.fillText("Keep this certificate as proof of your achievement.", canvas.width / 2, 460);
         }
 
-        // Function to download certificate as an image
+        // Function to download the certificate as an image
         function downloadCertificate() {
             const canvas = document.getElementById('certificateCanvas');
             const link = document.createElement('a');
+            link.href = canvas.toDataURL('image/png');
             link.download = 'certificate.png';
-            link.href = canvas.toDataURL();
             link.click();
         }
     </script>
