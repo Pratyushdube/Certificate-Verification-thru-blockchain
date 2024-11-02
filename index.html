@@ -4,32 +4,68 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Certificate Verification System</title>
-    <script src="https://unpkg.com/web3@latest/dist/web3.min.js"></script> 
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://unpkg.com/web3@latest/dist/web3.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" href="styles.css"> <!-- Link to external CSS -->
 </head>
 <body>
-    <h1>Certificate Verification System</h1>
+    <div class="container">
+        <h1 class="text-center">Certificate Verification System</h1>
 
-    <!-- Issue Certificate Section -->
-    <h2>Issue Certificate</h2>
-    <input type="text" id="name" placeholder="Name">
-    <input type="text" id="course" placeholder="Course">
-    <input type="text" id="dateIssued" placeholder="Date Issued">
-    <button id="issueButton">Issue Certificate</button>
+        <!-- Issue Certificate Section -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h2>Issue Certificate</h2>
+            </div>
+            <div class="card-body">
+                <div class="form-group">
+                    <input type="text" id="name" class="form-control" placeholder="Name" required>
+                </div>
+                <div class="form-group">
+                    <input type="text" id="course" class="form-control" placeholder="Course" required>
+                </div>
+                <div class="form-group">
+                    <input type="text" id="dateIssued" class="form-control" placeholder="Date Issued (YYYY-MM-DD)" required>
+                </div>
+                <button id="issueButton" class="btn btn-primary">Issue Certificate</button>
+            </div>
+        </div>
 
-    <!-- Verify Certificate Section -->
-    <h2>Verify Certificate</h2>
-    <input type="text" id="transactionHash" placeholder="Enter Transaction Hash">
-    <button id="verifyButton">Verify Certificate</button>
-    <div id="verificationResult"></div>
-    <div id="dateIssuedResult"></div>
+        <!-- Canvas Section for Certificate -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h2>Generated Certificate</h2>
+            </div>
+            <div class="card-body text-center">
+                <canvas id="certificateCanvas" width="600" height="400"></canvas>
+                <br>
+                <button id="downloadButton" class="btn btn-success mt-2">Download Certificate</button>
+            </div>
+        </div>
+
+        <!-- Verify Certificate Section -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h2>Verify Certificate</h2>
+            </div>
+            <div class="card-body">
+                <div class="form-group">
+                    <input type="text" id="transactionHash" class="form-control" placeholder="Enter Transaction Hash" required>
+                </div>
+                <button id="verifyButton" class="btn btn-warning">Verify Certificate</button>
+                <div id="verificationResult" class="mt-3"></div>
+                <div id="dateIssuedResult" class="mt-2"></div>
+            </div>
+        </div>
+    </div>
 
     <script>
         let web3;
         let contract;
         const contractAddress = '0x545192dEc1b98a19D87BB67f5b6696CAA1C538bF'; // Replace with your deployed contract address
-    
-        // Load ABI from JSON file (if needed for additional verification, but not required in this case)
+
+        // Load ABI from JSON file (if needed for verification)
         async function loadABI() {
             try {
                 const response = await fetch('contractABI.json'); // Ensure the file path is correct
@@ -42,7 +78,7 @@
                 console.error('Error fetching ABI:', error);
             }
         }
-    
+
         window.onload = async () => {
             if (window.ethereum) {
                 web3 = new Web3(window.ethereum);
@@ -55,10 +91,11 @@
                     console.error('Failed to load ABI. Cannot proceed without it.');
                 }
             }
-            
+
             // Add event listeners for buttons
             document.getElementById('issueButton').addEventListener('click', issueCertificate);
-            document.getElementById('verifyButton').addEventListener('click', verifyCertificate);
+            document.getElementById('downloadButton').addEventListener('click', downloadCertificate);
+            document.getElementById('verifyButton').addEventListener('click', getBlockDetailsFromEtherscan);
         };
 
         // Function to issue a certificate
@@ -71,14 +108,16 @@
                 const accounts = await web3.eth.getAccounts();
                 const result = await contract.methods.issueCertificate(name, course, dateIssued).send({ from: accounts[0] });
                 alert(`Certificate issued successfully! Transaction Hash: ${result.transactionHash}`);
+                // Create certificate image after issuance
+                createCertificateCanvas(name, course, dateIssued);
             } catch (error) {
                 console.error("Error issuing certificate:", error);
                 alert('Failed to issue certificate. Check console for details.');
             }
         }
 
-        // Function to fetch block details from Etherscan API using transaction hash
-        async function getBlockDetailsFromEtherscan(transactionHash) {
+        async function getBlockDetailsFromEtherscan() {
+            const transactionHash = document.getElementById('transactionHash').value;
             const etherscanApiKey = "IMVG9ZA8T5H5M2V31J4NYGA1RRRR7KX1QH"; // Replace with your Etherscan API key
             const url = `https://api-sepolia.etherscan.io/api?module=proxy&action=eth_getTransactionByHash&txhash=${transactionHash}&apikey=${etherscanApiKey}`;
 
@@ -95,7 +134,7 @@
                     const blockData = await blockResponse.json();
 
                     if (blockData.result) {
-                        return blockData.result;
+                        document.getElementById('verificationResult').innerText = `Block Number: ${blockData.result.number}, Timestamp: ${new Date(parseInt(blockData.result.timestamp, 16) * 1000).toLocaleString()}`;
                     }
                 }
             } catch (error) {
@@ -103,25 +142,39 @@
             }
         }
 
-        // Function to verify a certificate by transaction hash
-        async function verifyCertificate() {
-            const transactionHash = document.getElementById('transactionHash').value;
-    
-            try {
-                // Fetch block details from Etherscan API
-                const blockDetails = await getBlockDetailsFromEtherscan(transactionHash);
+        // Function to create certificate canvas
+        function createCertificateCanvas(name, course, dateIssued) {
+            const canvas = document.getElementById('certificateCanvas');
+            const ctx = canvas.getContext('2d');
 
-                if (blockDetails) {
-                    const blockTimestamp = parseInt(blockDetails.timestamp, 16) * 1000; // Convert hex to decimal and then to milliseconds
-                    const dateIssued = new Date(blockTimestamp).toLocaleString(); // Convert timestamp to readable date
+            // Clear the canvas before drawing
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-                    // Display the date issued
-                    document.getElementById('dateIssuedResult').innerText = `Date Issued: ${dateIssued}`;
-                }
-            } catch (error) {
-                console.error("Error verifying certificate:", error);
-                alert('Failed to verify certificate. Check console for details.');
-            }
+            // Draw background (optional)
+            ctx.fillStyle = "#f1f1f1";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Add title
+            ctx.fillStyle = "#000";
+            ctx.font = "24px Arial";
+            ctx.fillText("Certificate of Completion", 150, 100);
+
+            // Add certificate details
+            ctx.font = "20px Crimson";
+            ctx.fillText(`This certifies that`, 180, 150);
+            ctx.fillText(`${name}`, 220, 200); // Name of the student
+            ctx.fillText(`has successfully completed the course`, 130, 250);
+            ctx.fillText(`${course}`, 230, 300); // Course name
+            ctx.fillText(`Issued on: ${dateIssued}`, 190, 350); // Date issued
+        }
+
+        // Function to download certificate as an image
+        function downloadCertificate() {
+            const canvas = document.getElementById('certificateCanvas');
+            const link = document.createElement('a');
+            link.download = 'certificate.png';
+            link.href = canvas.toDataURL();
+            link.click();
         }
     </script>
 </body>
