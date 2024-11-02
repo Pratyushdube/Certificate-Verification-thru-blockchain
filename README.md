@@ -49,8 +49,6 @@ Academic certificate verification is often plagued by issues of forgery and inef
 Ensure you have the following installed:
 
 - [Node.js](https://nodejs.org/)
-- [Truffle](https://www.trufflesuite.com/truffle)
-- [Ganache](https://www.trufflesuite.com/ganache) (for local blockchain simulation)
 - [MetaMask](https://metamask.io/) (or another Ethereum wallet)
 
 ### Installation
@@ -71,14 +69,14 @@ Ensure you have the following installed:
 3. **Compile and migrate the smart contracts:**
 
    ```bash
-   truffle compile
-   truffle migrate --network development
+   .
    ```
 
 4. **Start the backend server:**
 
    ```bash
    npm start
+   http-server
    ```
 
 5. **Run the frontend:**
