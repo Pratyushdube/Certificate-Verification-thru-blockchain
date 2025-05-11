@@ -10,7 +10,7 @@ A blockchain-based system designed for secure and decentralized verification of 
 - [Features](#features)
 - [Project Structure](#project-structure)
 - [Technologies Used](#technologies-used)
-- [Getting Started](#getting-started)
+- [Prerequisites](#Prerequisites) 
 - [Usage](#usage)
 - [Contributing](#contributing)
 - [License](#license)
@@ -36,13 +36,11 @@ Academic certificate verification is often plagued by issues of forgery and inef
 
 ## Technologies Used
 
-- **Blockchain Platform**: Ethereum (or another blockchain, as applicable)
+- **Blockchain Platform**: Ethereum 
 - **Smart Contracts**: Solidity
 - **Frontend**: HTML, CSS, JavaScript, React.js
 - **Backend**: Node.js, Express
 - **Web3 Integration**: Web3.js (or Ethers.js)
-
-## Getting Started
 
 ### Prerequisites
 
@@ -50,42 +48,6 @@ Ensure you have the following installed:
 
 - [Node.js](https://nodejs.org/)
 - [MetaMask](https://metamask.io/) (or another Ethereum wallet)
-
-### Installation
-
-1. **Clone the repository:**
-
-   ```bash
-   git clone https://github.com/Pratyushdube/Certificate-Verification-thru-blockchain.git
-   cd Certificate-Verification-thru-blockchain
-   ```
-
-2. **Install dependencies:**
-
-   ```bash
-   npm install
-   ```
-
-3. **Compile and migrate the smart contracts:**
-
-   ```bash
-   .
-   ```
-
-4. **Start the backend server:**
-
-   ```bash
-   npm start
-   http-server
-   ```
-
-5. **Run the frontend:**
-
-   ```bash
-   cd frontend
-   npm install
-   npm start
-   ```
 
 ## Usage
 
